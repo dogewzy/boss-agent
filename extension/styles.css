@@ -1,0 +1,138 @@
+.boss-agent-panel {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 2147483647;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  color: #1f2933;
+  background: #ffffff;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.boss-agent-panel * {
+  box-sizing: border-box;
+}
+
+.boss-agent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  font-weight: 700;
+}
+
+.boss-agent-close {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 24px;
+}
+
+.boss-agent-body {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+}
+
+.boss-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.boss-agent-select,
+.boss-agent-textarea {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2933;
+  font: inherit;
+}
+
+.boss-agent-select {
+  height: 34px;
+  padding: 0 8px;
+}
+
+.boss-agent-textarea {
+  min-height: 108px;
+  resize: vertical;
+  padding: 9px 10px;
+}
+
+.boss-agent-primary,
+.boss-agent-polish,
+.boss-agent-secondary {
+  height: 34px;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+}
+
+.boss-agent-primary {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #00bebd;
+  background: #00bebd;
+  color: #fff;
+}
+
+.boss-agent-polish {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.boss-agent-secondary {
+  width: 72px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  background: #fff;
+  color: #334155;
+}
+
+.boss-agent-primary:disabled,
+.boss-agent-polish:disabled,
+.boss-agent-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.boss-agent-status {
+  min-height: 20px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.boss-agent-status[data-tone="error"] {
+  color: #c2410c;
+}
+
+.boss-agent-mini {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 2147483647;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #00bebd;
+  border-radius: 8px;
+  background: #00bebd;
+  color: #fff;
+  cursor: pointer;
+  font: 650 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
