@@ -73,7 +73,9 @@
 
 .boss-agent-primary,
 .boss-agent-polish,
-.boss-agent-secondary {
+.boss-agent-secondary,
+.boss-agent-done,
+.boss-agent-skip {
   height: 34px;
   border-radius: 6px;
   cursor: pointer;
@@ -104,9 +106,30 @@
   color: #334155;
 }
 
+.boss-agent-done,
+.boss-agent-skip {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  background: #fff;
+  color: #334155;
+}
+
+.boss-agent-done {
+  border-color: #00a78e;
+  color: #00796b;
+}
+
+.boss-agent-skip {
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
 .boss-agent-primary:disabled,
 .boss-agent-polish:disabled,
-.boss-agent-secondary:disabled {
+.boss-agent-secondary:disabled,
+.boss-agent-done:disabled,
+.boss-agent-skip:disabled {
   cursor: not-allowed;
   opacity: 0.62;
 }
@@ -135,4 +158,58 @@
   cursor: pointer;
   font: 650 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
+
+.boss-agent-auto-panel {
+  right: 22px;
+  bottom: 22px;
+}
+
+.boss-agent-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.boss-agent-grid label {
+  display: grid;
+  gap: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.boss-agent-input {
+  width: 100%;
+  height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 6px;
+  padding: 0 8px;
+  color: #1f2933;
+  font: inherit;
+}
+
+.boss-agent-check {
+  min-width: 92px;
+  height: 34px;
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px !important;
+  padding: 0 8px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 6px;
+  color: #334155 !important;
+}
+
+.boss-agent-check input {
+  margin: 0;
+}
+
+.boss-agent-auto-count {
+  min-height: 18px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 650;
 }
