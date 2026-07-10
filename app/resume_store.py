@@ -10,8 +10,14 @@ from app.schemas import ResumeProfile
 
 SelectedProfile = Literal["agent", "fde"]
 
-DEFAULT_AGENT_RESUME_PATH = Path("resumes/agent-resume.md")
-DEFAULT_FDE_RESUME_PATH = Path("resumes/fde-resume.md")
+DEFAULT_AGENT_RESUME_PATHS = [
+    Path("resumes/agent-resume.md"),
+    Path("/Users/wangzhenyan/Downloads/王禛彦-Agent开发工程师-简历-AI技能栈强化版.md"),
+]
+DEFAULT_FDE_RESUME_PATHS = [
+    Path("resumes/fde-resume.md"),
+    Path("/Users/wangzhenyan/Downloads/王禛彦-FDE现场部署工程师-Agent项目技术负责人-简历.md"),
+]
 
 
 @dataclass(frozen=True)
@@ -22,11 +28,13 @@ class ResumeBundle:
 
 class ResumeStore:
     def __init__(self) -> None:
-        self.agent_path = Path(
-            os.getenv("BOSS_AGENT_RESUME_AGENT_PATH", str(DEFAULT_AGENT_RESUME_PATH))
+        self.agent_path = self._resolve_resume_path(
+            "BOSS_AGENT_RESUME_AGENT_PATH",
+            DEFAULT_AGENT_RESUME_PATHS,
         )
-        self.fde_path = Path(
-            os.getenv("BOSS_AGENT_RESUME_FDE_PATH", str(DEFAULT_FDE_RESUME_PATH))
+        self.fde_path = self._resolve_resume_path(
+            "BOSS_AGENT_RESUME_FDE_PATH",
+            DEFAULT_FDE_RESUME_PATHS,
         )
 
     def load(self) -> ResumeBundle:
@@ -97,3 +105,13 @@ class ResumeStore:
         if not path.exists():
             raise FileNotFoundError(f"Resume file not found: {path}")
         return path.read_text(encoding="utf-8").strip()
+
+    @staticmethod
+    def _resolve_resume_path(env_name: str, candidates: list[Path]) -> Path:
+        env_value = os.getenv(env_name)
+        if env_value:
+            return Path(env_value)
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return candidates[0]
