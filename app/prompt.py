@@ -12,6 +12,7 @@ def build_messages(
     company: str,
     description: str,
     jd_analysis: JDAnalysis,
+    history_examples: list[dict] | None = None,
 ) -> list[dict[str, str]]:
     system = (
         "你是一个求职沟通助手，帮助候选人基于岗位 JD 和简历生成 BOSS 直聘开场打招呼内容。"
@@ -28,16 +29,22 @@ def build_messages(
 3. 优先引用简历中最能匹配 JD 的 2-3 个事实，弱相关经历不要写。
 4. 如果 JD 强调数据平台、数据治理、数据分析、BI、搜索推荐或大数据系统，优先提数据工作流、调度、ETL、大数据量查询、Milvus/向量检索、Agent 与数据场景结合等经历。
 5. 如果 JD 强调 AI Coding、研发效能、代码生成、代码评审、PR 自动化、CI/CD、自动修复或质量门禁，优先提 Coding Agent、代码仓库理解、AI IDE/Coding Agent 使用、受控代码修改/MR、trace 审计、自动化测试/发布等经历；不要泛泛写 RAG 知识库。
-6. 如果 JD 没有明确提到 K8s、日志、线上诊断、部署运维，不要把 K8s、日志、生产诊断作为招呼重点。
-7. 不要只罗列技术名词，要把技术名词落到“能做什么场景”。
-8. 不要写“我非常完美匹配”等过度营销表达。
-9. 只输出打招呼正文，不要解释。
+6. 如果 JD 画像不是 AI Coding/研发效能方向，输出中禁止出现“Coding Agent”“代码仓库”“受控代码修改”“MR”等 AI Coding 证据；可改用 Agent 基建、业务流程抽象、工具编排、多 Agent、RAG、后端工程等更贴近岗位主体的事实。
+7. 如果 JD 没有明确提到 K8s、日志、线上诊断、部署运维，不要把 K8s、日志、生产诊断作为招呼重点。
+8. 不要只罗列技术名词，要把技术名词落到“能做什么场景”。
+9. 不要写“我非常完美匹配”等过度营销表达。
+10. 候选人的工作年限、项目数量、用户数量、技术经历只能来自简历，不能从 JD 的任职要求中复制。例如 JD 写“5年以上经验”不代表候选人只有5年。
+11. 优先匹配 JD 画像中的 main_responsibilities 和 required_skills；bonus_points 只能作为辅助，不要覆盖岗位主体。
+12. 只输出打招呼正文，不要解释。
 
 推荐句式：
 您好，我有 X 年 Python 后端/Agent 工程化经验，做过 A 场景和 B 场景；结合 JD 的 C/D/E 方向，我过往的 F 经历可以支撑快速落地。
 
 JD 画像：
 {_dump_analysis(jd_analysis)}
+
+相似历史记录：
+{_dump_history_examples(history_examples or [])}
 
 岗位标题：
 {job_title or "未知"}
@@ -134,3 +141,21 @@ def normalize_markdown_resume(text: str) -> str:
 
 def _dump_analysis(jd_analysis: JDAnalysis) -> str:
     return json.dumps(jd_analysis.model_dump(), ensure_ascii=False, indent=2)
+
+
+def _dump_history_examples(history_examples: list[dict]) -> str:
+    if not history_examples:
+        return "暂无。"
+    lines = [
+        "以下是本地 SQLite 中相似 JD 的历史生成记录，仅用于参考表达风格和避免重复泛化。"
+        "不要机械复用历史话术；如果历史岗位主体与当前 JD 的 main_responsibilities 不一致，必须忽略。"
+    ]
+    for index, item in enumerate(history_examples[:5], start=1):
+        analysis = item.get("jd_analysis")
+        role_type = analysis.role_type if isinstance(analysis, JDAnalysis) else ""
+        scenarios = "、".join(analysis.business_scenarios[:4]) if isinstance(analysis, JDAnalysis) else ""
+        lines.append(
+            f"{index}. 状态:{item.get('status', 'generated')} | 岗位:{item.get('job_title', '')} | "
+            f"画像:{role_type} | 场景:{scenarios} | 历史话术:{item.get('greeting', '')}"
+        )
+    return "\n".join(lines)

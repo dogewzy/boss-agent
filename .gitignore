@@ -10,3 +10,4 @@ __pycache__/
 !.env.example
 generated_resumes/
 resumes/
+data/

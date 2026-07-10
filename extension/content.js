@@ -1,6 +1,7 @@
 (function () {
   const API_URL = "http://127.0.0.1:8765/api/greeting";
   const RESUME_API_URL = "http://127.0.0.1:8765/api/resume-polish";
+  const HISTORY_API_URL = "http://127.0.0.1:8765/api/history";
   const PANEL_ID = "boss-agent-greeting-panel";
   const MINI_ID = "boss-agent-greeting-mini";
   const AUTO_PANEL_ID = "boss-agent-auto-panel";
@@ -184,6 +185,21 @@
     return data;
   }
 
+  async function markHistory(historyId, status) {
+    if (!historyId) {
+      return;
+    }
+    try {
+      await fetch(`${HISTORY_API_URL}/${historyId}/mark`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+    } catch (_) {
+      // History marking should not block the job flow.
+    }
+  }
+
   function createPanel() {
     const panel = document.createElement("div");
     panel.id = PANEL_ID;
@@ -256,6 +272,7 @@
 
     try {
       const data = await fetchGreeting(jobData, select.value);
+      panel.dataset.historyId = data.history_id || "";
       output.value = data.greeting;
       copy.disabled = !data.greeting;
       setStatus(panel, `已生成，使用 ${data.resume_profile === "agent" ? "Agent" : "FDE"} 简历。`);
@@ -302,6 +319,7 @@
         throw new Error(data.detail || `HTTP ${response.status}`);
       }
       output.value = data.file_path;
+      panel.dataset.historyId = data.history_id || "";
       copy.disabled = false;
       setStatus(panel, `已生成 ${data.resume_profile === "agent" ? "Agent" : "FDE"} 定制简历。`);
     } catch (error) {
@@ -318,6 +336,7 @@
       return;
     }
     await navigator.clipboard.writeText(output.value);
+    await markHistory(panel.dataset.historyId, "copied");
     setStatus(panel, "已复制。");
   }
 
@@ -493,7 +512,7 @@
     }
   }
 
-  async function fillChat(panel, greeting, options) {
+  async function fillChat(panel, greeting, options, task) {
     const input = await waitForChatInput();
     if (!input) {
       throw new Error("没有找到聊天输入框。");
@@ -504,6 +523,7 @@
     if (options.autoSend) {
       setStatus(panel, "聊天页已填入，正在发送...");
       await sendGreeting(panel);
+      await markHistory(task?.historyId, "sent");
       await runtimeMessage({ type: "DETAIL_DONE", detail: "已在聊天页发送招呼。" });
       return;
     }
@@ -526,11 +546,13 @@
 
       setStatus(panel, "自动任务：正在生成招呼...");
       const data = await fetchGreeting(jobData, select.value);
+      panel.dataset.historyId = data.history_id || "";
       output.value = data.greeting;
       panel.querySelector(".boss-agent-secondary").disabled = false;
       await runtimeMessage({
         type: "SET_CURRENT_GREETING",
         greeting: data.greeting,
+        historyId: data.history_id || "",
         jobData
       });
       await openCommunication(panel);
@@ -551,6 +573,7 @@
     });
     panel.querySelector(".boss-agent-done").addEventListener("click", async () => {
       setStatus(panel, "已标记完成，正在关闭标签页...");
+      await markHistory(panel.dataset.historyId, "sent");
       await runtimeMessage({ type: "DETAIL_DONE", detail: "用户确认已发送。" });
     });
     panel.querySelector(".boss-agent-skip").addEventListener("click", async () => {
@@ -815,8 +838,9 @@
       setStatus(panel, "没有待发送的自动任务。");
       return;
     }
+    panel.dataset.historyId = taskResponse.task.historyId || "";
     try {
-      await fillChat(panel, taskResponse.task.greeting, taskResponse.options || {});
+      await fillChat(panel, taskResponse.task.greeting, taskResponse.options || {}, taskResponse.task);
     } catch (error) {
       setStatus(panel, `聊天页自动任务暂停：${error.message}`, "error");
     }

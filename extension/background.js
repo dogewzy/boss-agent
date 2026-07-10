@@ -258,6 +258,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           state.currentJob = {
             ...state.currentJob,
             greeting: message.greeting || "",
+            historyId: message.historyId || "",
             jobData: message.jobData || null
           };
           state.lastMessage = "招呼已生成，等待进入聊天页。";

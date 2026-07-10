@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from httpx import HTTPStatusError
 
+from app.history_store import default_history_store
 from app.jd_analysis import build_jd_analysis_messages, parse_jd_analysis
 from app.llm import DeepSeekClient, DeepSeekConfigError, deepseek_key_loaded
 from app.prompt import (
@@ -21,6 +22,8 @@ from app.resume_store import ResumeStore
 from app.schemas import (
     GreetingRequest,
     GreetingResponse,
+    HistoryMarkRequest,
+    HistoryMarkResponse,
     HealthResponse,
     ResumePolishRequest,
     ResumePolishResponse,
@@ -38,6 +41,7 @@ app.add_middleware(
 resume_store = ResumeStore()
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "generated_resumes"
+history_store = default_history_store(PROJECT_ROOT)
 
 
 @app.get("/api/health", response_model=HealthResponse)
@@ -71,6 +75,7 @@ async def create_greeting(payload: GreetingRequest) -> GreetingResponse:
         description=payload.description,
     )
     resume_text = resumes.agent if profile == "agent" else resumes.fde
+    history_examples = history_store.similar_greetings(jd_analysis)
 
     messages = build_messages(
         resume_text=resume_text,
@@ -78,6 +83,7 @@ async def create_greeting(payload: GreetingRequest) -> GreetingResponse:
         company=payload.company,
         description=payload.description,
         jd_analysis=jd_analysis,
+        history_examples=history_examples,
     )
     try:
         raw_text = await client.chat(messages)
@@ -90,11 +96,26 @@ async def create_greeting(payload: GreetingRequest) -> GreetingResponse:
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"DeepSeek request failed: {exc}") from exc
 
+    greeting = normalize_greeting(raw_text)
+    history_id = None
+    try:
+        history_id = history_store.append_greeting(
+            job_title=payload.job_title,
+            company=payload.company,
+            description=payload.description,
+            resume_profile=profile,
+            model=client.model,
+            jd_analysis=jd_analysis,
+            greeting=greeting,
+        )
+    except Exception:
+        history_id = None
     return GreetingResponse(
-        greeting=normalize_greeting(raw_text),
+        greeting=greeting,
         resume_profile=profile,
         model=client.model,
         jd_analysis=jd_analysis,
+        history_id=history_id,
     )
 
 
@@ -144,13 +165,35 @@ async def polish_resume(payload: ResumePolishRequest) -> ResumePolishResponse:
         company=payload.company,
         profile=profile,
     )
+    history_id = None
+    try:
+        history_id = history_store.append_resume_polish(
+            job_title=payload.job_title,
+            company=payload.company,
+            description=payload.description,
+            resume_profile=profile,
+            model=client.model,
+            jd_analysis=jd_analysis,
+            file_path=str(output_path),
+        )
+    except Exception:
+        history_id = None
     return ResumePolishResponse(
         markdown=markdown,
         file_path=str(output_path),
         resume_profile=profile,
         model=client.model,
         jd_analysis=jd_analysis,
+        history_id=history_id,
     )
+
+
+@app.post("/api/history/{history_id}/mark", response_model=HistoryMarkResponse)
+async def mark_history(history_id: str, payload: HistoryMarkRequest) -> HistoryMarkResponse:
+    ok = history_store.mark(history_id, payload.status, payload.feedback)
+    if not ok:
+        raise HTTPException(status_code=404, detail="History record not found")
+    return HistoryMarkResponse(ok=True)
 
 
 async def _analyze_jd(
@@ -168,8 +211,8 @@ async def _analyze_jd(
     try:
         raw_text = await client.chat(messages, max_tokens=900, temperature=0.1)
     except Exception:
-        return parse_jd_analysis("", description)
-    return parse_jd_analysis(raw_text, description)
+        return parse_jd_analysis("", description, job_title)
+    return parse_jd_analysis(raw_text, description, job_title)
 
 
 def _write_resume_file(

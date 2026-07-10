@@ -8,6 +8,8 @@ ResumeProfile = Literal["auto", "agent", "fde"]
 
 class JDAnalysis(BaseModel):
     role_type: str = Field(default="")
+    main_responsibilities: list[str] = Field(default_factory=list)
+    required_skills: list[str] = Field(default_factory=list)
     business_scenarios: list[str] = Field(default_factory=list)
     core_capabilities: list[str] = Field(default_factory=list)
     engineering_requirements: list[str] = Field(default_factory=list)
@@ -28,6 +30,7 @@ class GreetingResponse(BaseModel):
     resume_profile: Literal["agent", "fde"]
     model: str
     jd_analysis: JDAnalysis
+    history_id: str | None = None
 
 
 class ResumePolishRequest(BaseModel):
@@ -43,6 +46,16 @@ class ResumePolishResponse(BaseModel):
     resume_profile: Literal["agent", "fde"]
     model: str
     jd_analysis: JDAnalysis
+    history_id: str | None = None
+
+
+class HistoryMarkRequest(BaseModel):
+    status: Literal["copied", "sent", "skipped"]
+    feedback: str = Field(default="", max_length=1000)
+
+
+class HistoryMarkResponse(BaseModel):
+    ok: bool
 
 
 class HealthResponse(BaseModel):

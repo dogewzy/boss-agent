@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOSS Agent Greeting Assistant",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Generate tailored BOSS greeting messages from the visible job detail page.",
   "permissions": ["storage", "tabs"],
   "background": {

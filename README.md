@@ -95,6 +95,23 @@ generated_resumes/
 export BOSS_AGENT_OUTPUT_DIR="/path/to/generated-resumes"
 ```
 
+## 本地历史记录
+
+系统会把生成历史保存到本地 SQLite：
+
+```text
+data/boss_agent.sqlite3
+```
+
+保存内容包括岗位标题、公司、职位描述、JD 画像、选择的简历、生成的话术、润色简历文件路径，以及 `generated` / `copied` / `sent` 等状态。后续生成打招呼内容时，会从 SQLite 里读取相似 JD 的历史记录作为参考，减少泛化表达。
+
+可以用下面命令查看最近记录：
+
+```bash
+sqlite3 data/boss_agent.sqlite3 \
+  "select created_at,status,job_title,resume_profile,substr(output_text,1,80) from interactions order by created_at desc limit 10;"
+```
+
 ## API
 
 ### `POST /api/greeting`
@@ -110,6 +127,19 @@ export BOSS_AGENT_OUTPUT_DIR="/path/to/generated-resumes"
 }
 ```
 
+响应：
+
+```json
+{
+  "greeting": "您好，我是候选人姓名...",
+  "resume_profile": "agent",
+  "model": "deepseek-chat",
+  "history_id": "..."
+}
+```
+
+`resume_profile` 可选：`auto`、`agent`、`fde`。
+
 ### `POST /api/resume-polish`
 
 请求字段与 `/api/greeting` 相同。
@@ -121,18 +151,19 @@ export BOSS_AGENT_OUTPUT_DIR="/path/to/generated-resumes"
   "markdown": "# 候选人姓名...",
   "file_path": "generated_resumes/20260706-140000-agent-company-job.md",
   "resume_profile": "agent",
-  "model": "deepseek-chat"
+  "model": "deepseek-chat",
+  "history_id": "..."
 }
 ```
 
-`resume_profile` 可选：`auto`、`agent`、`fde`。
+### `POST /api/history/{history_id}/mark`
 
-响应：
+用于标记生成记录状态：
 
 ```json
 {
-  "greeting": "您好，我是候选人姓名...",
-  "resume_profile": "agent",
-  "model": "deepseek-chat"
+  "status": "copied"
 }
 ```
+
+`status` 可选：`copied`、`sent`、`skipped`。
