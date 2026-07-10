@@ -2,6 +2,10 @@
 
 一个本地求职辅助小工具：当你在浏览器中打开 BOSS 直聘岗位详情页时，Chrome 扩展读取页面上已经渲染出来的职位描述，发送给本地 FastAPI 服务；服务端结合本地简历和 DeepSeek 生成 200 字以内的打招呼内容。
 
+![BOSS Agent 演示](docs/assets/demo_fast.gif)
+
+[查看完整演示视频](docs/assets/demo.mp4)
+
 ## 设计边界
 
 - 不做独立爬虫，不主动攻克 BOSS 反爬。
